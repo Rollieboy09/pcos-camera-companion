@@ -1,0 +1,2090 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b7567">
+  <meta name="referrer" content="no-referrer">
+  <title>PCOS · Patient ID Live Camera</title>
+
+  <!--
+    Primary Care Operations System
+    S24-P1E.1D.2C — External Live In-Frame Patient ID Camera Companion
+    Version: 2.63.1D2C-S24-P1E.1
+
+    SECURITY MODEL
+    - Static HTTPS page only.
+    - No patient data, token, Apps Script endpoint, or credentials are embedded.
+    - Session data is received only from the window that opened this page.
+    - Patient-bound token remains in memory only.
+    - Upload uses the D.2B controlled form POST bridge.
+  -->
+
+  <style>
+    :root{
+      --pcos-bg:#f3f7f6;
+      --pcos-surface:#ffffff;
+      --pcos-surface-soft:#f7faf9;
+      --pcos-border:#dbe8e4;
+      --pcos-border-soft:#e8f0ed;
+      --pcos-text:#163e38;
+      --pcos-text-strong:#0c342f;
+      --pcos-text-soft:#365e57;
+      --pcos-muted:#6d837e;
+      --pcos-muted-2:#8aa09b;
+      --pcos-green-900:#064c45;
+      --pcos-green-800:#075d53;
+      --pcos-green-700:#0b7567;
+      --pcos-green-600:#0d8a78;
+      --pcos-green-100:#dff3ed;
+      --pcos-green-50:#eef8f5;
+      --pcos-warn:#9a6b11;
+      --pcos-warn-bg:#fff7df;
+      --pcos-danger:#9d4b45;
+      --pcos-danger-bg:#fff0ed;
+      --pcos-shadow:0 20px 48px rgba(10,63,54,.14);
+      --pcos-radius-xl:18px;
+      --pcos-radius-lg:14px;
+      --pcos-radius-md:11px;
+      --safe-top:env(safe-area-inset-top);
+      --safe-right:env(safe-area-inset-right);
+      --safe-bottom:env(safe-area-inset-bottom);
+      --safe-left:env(safe-area-inset-left);
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    html,
+    body{
+      margin:0;
+      width:100%;
+      min-width:0;
+      min-height:100%;
+      background:var(--pcos-bg);
+      color:var(--pcos-text);
+      font-family:
+        Inter,
+        "Segoe UI Variable Text",
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        Arial,
+        sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow-x:hidden;
+    }
+
+    body{
+      min-height:100dvh;
+    }
+
+    button,
+    input{
+      font:inherit;
+    }
+
+    button:focus-visible{
+      outline:3px solid rgba(13,138,120,.20);
+      outline-offset:2px;
+    }
+
+    [hidden]{
+      display:none !important;
+    }
+
+    .app{
+      min-height:100dvh;
+      display:flex;
+      flex-direction:column;
+      background:
+        radial-gradient(circle at 88% -5%,rgba(50,166,143,.06),transparent 28%),
+        linear-gradient(180deg,#fafcfb 0,var(--pcos-bg) 180px,var(--pcos-bg) 100%);
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      min-height:62px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:
+        calc(8px + var(--safe-top))
+        calc(12px + var(--safe-right))
+        8px
+        calc(12px + var(--safe-left));
+      border-bottom:1px solid var(--pcos-border);
+      background:rgba(255,255,255,.985);
+      box-shadow:0 1px 0 rgba(17,70,62,.02);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+
+    .identity{
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
+    .brand-mark{
+      width:36px;
+      height:36px;
+      flex:0 0 36px;
+      display:grid;
+      place-items:center;
+      border:1px solid #cee1dc;
+      border-radius:11px;
+      background:linear-gradient(145deg,#fff,#eaf7f3);
+      color:var(--pcos-green-800);
+      box-shadow:0 5px 14px rgba(11,53,46,.09);
+      font-size:15px;
+      font-weight:900;
+    }
+
+    .heading{
+      min-width:0;
+    }
+
+    .heading h1{
+      margin:0;
+      color:var(--pcos-text-strong);
+      font-size:16px;
+      line-height:1.15;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .heading p{
+      margin:3px 0 0;
+      color:var(--pcos-muted);
+      font-size:8.5px;
+      line-height:1.3;
+    }
+
+    .pill{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:5px 9px;
+      border:1px solid #c7e7de;
+      border-radius:999px;
+      background:var(--pcos-green-50);
+      color:var(--pcos-green-700);
+      font-size:9px;
+      font-weight:850;
+      letter-spacing:.035em;
+      white-space:nowrap;
+    }
+
+    .pill.warn{
+      border-color:#f0dea8;
+      background:var(--pcos-warn-bg);
+      color:var(--pcos-warn);
+    }
+
+    .content{
+      width:100%;
+      flex:1;
+      padding:
+        12px
+        calc(12px + var(--safe-right))
+        calc(22px + var(--safe-bottom))
+        calc(12px + var(--safe-left));
+    }
+
+    .workspace{
+      width:100%;
+      min-width:0;
+      max-width:760px;
+      margin:0 auto;
+      padding:14px;
+      border:1px solid var(--pcos-border);
+      border-radius:var(--pcos-radius-xl);
+      background:rgba(255,255,255,.96);
+      box-shadow:0 10px 28px rgba(10,63,54,.055);
+    }
+
+    .kicker{
+      color:var(--pcos-green-700);
+      font-size:9px;
+      line-height:1.2;
+      font-weight:900;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+    }
+
+    .page-title{
+      margin:5px 0 0;
+      color:var(--pcos-text-strong);
+      font-size:19px;
+      line-height:1.15;
+      font-weight:850;
+      letter-spacing:-.025em;
+    }
+
+    .page-subtitle{
+      margin:5px 0 0;
+      color:var(--pcos-muted);
+      font-size:11px;
+      line-height:1.5;
+    }
+
+    .stack{
+      width:100%;
+      display:grid;
+      gap:10px;
+      margin-top:13px;
+    }
+
+    .group{
+      width:100%;
+      min-width:0;
+      border:1px solid var(--pcos-border);
+      border-radius:var(--pcos-radius-lg);
+      background:var(--pcos-surface);
+      box-shadow:0 5px 16px rgba(11,63,55,.035);
+      overflow:hidden;
+    }
+
+    .patient-card{
+      padding:12px;
+    }
+
+    .patient-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .group-title{
+      color:var(--pcos-muted-2);
+      font-size:8px;
+      line-height:1.2;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .patient-name{
+      margin-top:4px;
+      color:var(--pcos-text-strong);
+      font-size:15px;
+      line-height:1.25;
+      font-weight:800;
+      overflow-wrap:anywhere;
+    }
+
+    .patient-meta{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .meta-box{
+      min-width:0;
+      padding:9px 10px;
+      border:1px solid var(--pcos-border-soft);
+      border-radius:10px;
+      background:var(--pcos-surface-soft);
+    }
+
+    .meta-box span,
+    .meta-box strong{
+      display:block;
+    }
+
+    .meta-box span{
+      color:var(--pcos-muted-2);
+      font-size:7.5px;
+      line-height:1.2;
+      font-weight:850;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .meta-box strong{
+      margin-top:4px;
+      color:var(--pcos-text-soft);
+      font-size:9.5px;
+      line-height:1.35;
+      font-weight:750;
+      overflow-wrap:anywhere;
+    }
+
+    .waiting{
+      padding:28px 18px;
+      text-align:center;
+    }
+
+    .waiting-icon{
+      width:52px;
+      height:52px;
+      display:grid;
+      place-items:center;
+      margin:0 auto 14px;
+      border-radius:16px;
+      background:var(--pcos-green-50);
+      color:var(--pcos-green-700);
+    }
+
+    .waiting-icon svg{
+      width:25px;
+      height:25px;
+      fill:none;
+      stroke:currentColor;
+      stroke-width:1.8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .waiting h2{
+      margin:0;
+      color:var(--pcos-text-strong);
+      font-size:18px;
+      line-height:1.2;
+    }
+
+    .waiting p{
+      margin:8px auto 0;
+      max-width:430px;
+      color:var(--pcos-muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+
+    /* ============================================================
+       LIVE CAMERA MODE
+       ============================================================ */
+
+    body.camera-active{
+      overflow:hidden;
+      background:#031916;
+    }
+
+    body.camera-active .app{
+      min-height:100dvh;
+      background:#031916;
+    }
+
+    body.camera-active .topbar,
+    body.camera-active .content{
+      display:none;
+    }
+
+    .camera-screen{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      width:100vw;
+      height:100dvh;
+      overflow:hidden;
+      background:#031916;
+      color:#fff;
+    }
+
+    .camera-video{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      background:#031916;
+    }
+
+    .camera-tint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg,rgba(0,21,18,.28),transparent 20%,transparent 73%,rgba(0,16,14,.62));
+    }
+
+    .camera-top{
+      position:absolute;
+      z-index:5;
+      top:0;
+      left:0;
+      right:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:
+        calc(12px + var(--safe-top))
+        calc(14px + var(--safe-right))
+        12px
+        calc(14px + var(--safe-left));
+    }
+
+    .camera-title{
+      min-width:0;
+    }
+
+    .camera-title strong{
+      display:block;
+      font-size:14px;
+      line-height:1.2;
+      font-weight:850;
+    }
+
+    .camera-title span{
+      display:block;
+      margin-top:3px;
+      color:rgba(255,255,255,.72);
+      font-size:9px;
+      line-height:1.3;
+    }
+
+    .camera-close{
+      width:42px;
+      height:42px;
+      flex:0 0 42px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:50%;
+      background:rgba(0,30,26,.48);
+      color:#fff;
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      cursor:pointer;
+    }
+
+    .camera-close svg{
+      width:20px;
+      height:20px;
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2;
+      stroke-linecap:round;
+    }
+
+    .frame-wrap{
+      position:absolute;
+      z-index:4;
+      left:50%;
+      top:50%;
+      width:min(88vw,620px);
+      aspect-ratio:85.60 / 53.98;
+      transform:translate(-50%,-53%);
+      border-radius:16px;
+      pointer-events:none;
+      box-shadow:0 0 0 9999px rgba(0,18,15,.48);
+    }
+
+    .frame-border{
+      position:absolute;
+      inset:0;
+      border:2px solid rgba(255,255,255,.78);
+      border-radius:16px;
+      box-shadow:
+        inset 0 0 0 1px rgba(13,138,120,.34),
+        0 0 0 1px rgba(4,40,35,.12);
+    }
+
+    .corner{
+      position:absolute;
+      width:34px;
+      height:34px;
+      border-color:#7af0d7;
+      border-style:solid;
+      filter:drop-shadow(0 2px 3px rgba(0,0,0,.28));
+    }
+
+    .corner.tl{
+      top:-2px;
+      left:-2px;
+      border-width:4px 0 0 4px;
+      border-radius:15px 0 0 0;
+    }
+
+    .corner.tr{
+      top:-2px;
+      right:-2px;
+      border-width:4px 4px 0 0;
+      border-radius:0 15px 0 0;
+    }
+
+    .corner.br{
+      right:-2px;
+      bottom:-2px;
+      border-width:0 4px 4px 0;
+      border-radius:0 0 15px 0;
+    }
+
+    .corner.bl{
+      left:-2px;
+      bottom:-2px;
+      border-width:0 0 4px 4px;
+      border-radius:0 0 0 15px;
+    }
+
+    .frame-copy{
+      position:absolute;
+      z-index:5;
+      left:50%;
+      top:calc(50% - min(29vw,205px));
+      width:min(92vw,650px);
+      transform:translateX(-50%);
+      text-align:center;
+      pointer-events:none;
+    }
+
+    .frame-copy strong{
+      display:block;
+      font-size:13px;
+      line-height:1.25;
+      font-weight:850;
+      text-shadow:0 1px 4px rgba(0,0,0,.45);
+    }
+
+    .frame-copy span{
+      display:block;
+      margin-top:4px;
+      color:rgba(255,255,255,.77);
+      font-size:10px;
+      line-height:1.35;
+      text-shadow:0 1px 4px rgba(0,0,0,.45);
+    }
+
+    .camera-bottom{
+      position:absolute;
+      z-index:6;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:
+        18px
+        calc(18px + var(--safe-right))
+        calc(16px + var(--safe-bottom))
+        calc(18px + var(--safe-left));
+      background:linear-gradient(180deg,transparent,rgba(0,18,15,.56) 32%,rgba(0,18,15,.82));
+    }
+
+    .camera-controls{
+      width:min(560px,100%);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:64px 1fr 64px;
+      align-items:center;
+      gap:16px;
+    }
+
+    .gallery-button{
+      width:54px;
+      height:54px;
+      justify-self:center;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:17px;
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      cursor:pointer;
+    }
+
+    .gallery-button svg{
+      width:23px;
+      height:23px;
+      fill:none;
+      stroke:currentColor;
+      stroke-width:1.8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .shutter{
+      width:78px;
+      height:78px;
+      justify-self:center;
+      display:grid;
+      place-items:center;
+      padding:0;
+      border:4px solid rgba(255,255,255,.92);
+      border-radius:50%;
+      background:transparent;
+      cursor:pointer;
+    }
+
+    .shutter::before{
+      content:"";
+      width:58px;
+      height:58px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 3px 13px rgba(0,0,0,.28);
+      transition:transform 110ms ease;
+    }
+
+    .shutter:active::before{
+      transform:scale(.91);
+    }
+
+    .camera-spacer{
+      width:54px;
+      height:54px;
+    }
+
+    .camera-hint{
+      margin-top:10px;
+      color:rgba(255,255,255,.72);
+      font-size:9px;
+      line-height:1.4;
+      text-align:center;
+    }
+
+    /* ============================================================
+       REVIEW
+       ============================================================ */
+
+    .review-card{
+      overflow:hidden;
+    }
+
+    .group-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      padding:13px;
+      border-bottom:1px solid var(--pcos-border-soft);
+    }
+
+    .group-head h3{
+      margin:0;
+      color:var(--pcos-text-strong);
+      font-size:14px;
+      line-height:1.25;
+    }
+
+    .group-head p{
+      margin:4px 0 0;
+      color:var(--pcos-muted);
+      font-size:10px;
+      line-height:1.45;
+    }
+
+    .review-media{
+      padding:12px;
+      background:#edf3f1;
+    }
+
+    .review-media img{
+      display:block;
+      width:100%;
+      max-height:58dvh;
+      object-fit:contain;
+      border-radius:12px;
+      background:#dfe9e6;
+      box-shadow:0 6px 18px rgba(6,53,45,.09);
+    }
+
+    .quality-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      padding:0 12px 12px;
+    }
+
+    .quality{
+      display:inline-flex;
+      align-items:center;
+      min-height:27px;
+      padding:5px 9px;
+      border:1px solid #cfe6df;
+      border-radius:999px;
+      background:var(--pcos-green-50);
+      color:var(--pcos-green-700);
+      font-size:9px;
+      font-weight:800;
+    }
+
+    .quality.warn{
+      border-color:#eedda9;
+      background:var(--pcos-warn-bg);
+      color:var(--pcos-warn);
+    }
+
+    .notice{
+      margin:0 12px 12px;
+      padding:10px 11px;
+      border:1px solid var(--pcos-border-soft);
+      border-radius:10px;
+      background:var(--pcos-surface-soft);
+      color:var(--pcos-text-soft);
+      font-size:10px;
+      line-height:1.5;
+    }
+
+    .notice.warn{
+      border-color:#eedda9;
+      background:var(--pcos-warn-bg);
+      color:#7d5a18;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1.25fr;
+      gap:8px;
+      padding:12px;
+      border-top:1px solid var(--pcos-border-soft);
+      background:#fff;
+    }
+
+    .button{
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 14px;
+      border:0;
+      border-radius:12px;
+      font-weight:850;
+      cursor:pointer;
+    }
+
+    .button.primary{
+      background:linear-gradient(135deg,var(--pcos-green-600),var(--pcos-green-900));
+      color:#fff;
+      box-shadow:0 9px 19px rgba(7,83,73,.18);
+    }
+
+    .button.secondary{
+      border:1px solid var(--pcos-border);
+      background:#fff;
+      color:var(--pcos-text-soft);
+    }
+
+    .button:disabled{
+      opacity:.58;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    .state-card{
+      padding:26px 16px;
+      text-align:center;
+    }
+
+    .state-icon{
+      width:50px;
+      height:50px;
+      display:grid;
+      place-items:center;
+      margin:0 auto 12px;
+      border-radius:16px;
+      background:var(--pcos-green-50);
+      color:var(--pcos-green-700);
+      font-size:24px;
+      font-weight:900;
+    }
+
+    .state-card h3{
+      margin:0;
+      color:var(--pcos-text-strong);
+      font-size:17px;
+    }
+
+    .state-card p{
+      margin:7px auto 0;
+      max-width:420px;
+      color:var(--pcos-muted);
+      font-size:11px;
+      line-height:1.55;
+    }
+
+    .state-error{
+      margin-top:12px;
+      padding:10px 11px;
+      border:1px solid #efc8c3;
+      border-radius:10px;
+      background:var(--pcos-danger-bg);
+      color:var(--pcos-danger);
+      font-size:10px;
+      line-height:1.5;
+      text-align:left;
+    }
+
+    .loader{
+      width:34px;
+      height:34px;
+      margin:0 auto 14px;
+      border:3px solid #d9ebe6;
+      border-top-color:var(--pcos-green-700);
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    @media (orientation:landscape) and (max-height:560px){
+      .frame-wrap{
+        width:min(62vw,620px);
+        transform:translate(-50%,-51%);
+      }
+
+      .frame-copy{
+        top:calc(50% - min(19vw,170px));
+      }
+
+      .camera-top{
+        padding-top:calc(7px + var(--safe-top));
+      }
+
+      .camera-bottom{
+        padding-top:8px;
+      }
+
+      .shutter{
+        width:66px;
+        height:66px;
+      }
+
+      .shutter::before{
+        width:48px;
+        height:48px;
+      }
+
+      .gallery-button,
+      .camera-spacer{
+        width:48px;
+        height:48px;
+      }
+    }
+
+    @media (min-width:700px){
+      .content{
+        padding-top:18px;
+      }
+
+      .workspace{
+        padding:18px;
+      }
+
+      .page-title{
+        font-size:22px;
+      }
+
+      .frame-wrap{
+        width:min(74vw,680px);
+      }
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *,
+      *::before,
+      *::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.01ms !important;
+        scroll-behavior:auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="identity">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <div class="heading">
+          <h1>Patient ID Live Camera</h1>
+          <p>Primary Care Operations System · Secure Capture Companion</p>
+        </div>
+      </div>
+
+      <span class="pill" id="secure-pill">Secure</span>
+    </header>
+
+    <main class="content">
+      <section class="workspace">
+        <div class="kicker">PATIENT OPERATIONS</div>
+        <h2 class="page-title">Patient ID Capture</h2>
+        <p class="page-subtitle">
+          Keep the whole physical ID inside the guide, then review the photo before upload.
+        </p>
+
+        <div class="stack" id="root">
+          <section class="group waiting">
+            <div class="waiting-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3.5" y="5" width="17" height="14" rx="2"></rect>
+                <circle cx="9" cy="11" r="2"></circle>
+                <path d="M6.5 16c.7-1.7 1.8-2.6 3.1-2.6 1.2 0 2.3.9 3 2.6"></path>
+                <path d="M14.5 10h3.2M14.5 13h3.2"></path>
+              </svg>
+            </div>
+
+            <div class="group-title">PCOS CAMERA COMPANION</div>
+            <h2>Waiting for a secure PCOS session</h2>
+            <p>
+              Open this camera from the Patient ID screen in PCOS. Patient information and the signed capture session are never stored in this page.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section
+    class="camera-screen"
+    id="camera-screen"
+    aria-label="Live Patient ID camera"
+    hidden>
+
+    <video
+      class="camera-video"
+      id="camera-video"
+      autoplay
+      muted
+      playsinline>
+    </video>
+
+    <div class="camera-tint"></div>
+
+    <div class="camera-top">
+      <div class="camera-title">
+        <strong>Patient ID</strong>
+        <span id="camera-patient">Selected patient</span>
+      </div>
+
+      <button
+        class="camera-close"
+        id="camera-close"
+        type="button"
+        aria-label="Close live camera">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="frame-copy">
+      <strong>Keep the entire ID inside the frame</strong>
+      <span>Use a flat surface and avoid glare or shadows.</span>
+    </div>
+
+    <div class="frame-wrap" id="camera-frame" aria-hidden="true">
+      <div class="frame-border"></div>
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner br"></span>
+      <span class="corner bl"></span>
+    </div>
+
+    <div class="camera-bottom">
+      <div class="camera-controls">
+        <button
+          class="gallery-button"
+          id="camera-gallery"
+          type="button"
+          aria-label="Choose Patient ID from gallery">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <circle cx="8" cy="9" r="1.5"></circle>
+            <path d="M4.5 17l5-5 3.5 3 2.5-2.5 4 4.5"></path>
+          </svg>
+        </button>
+
+        <button
+          class="shutter"
+          id="camera-shutter"
+          type="button"
+          aria-label="Capture Patient ID">
+        </button>
+
+        <div class="camera-spacer" aria-hidden="true"></div>
+      </div>
+
+      <div class="camera-hint">
+        Hold the phone steady and keep all four ID corners visible.
+      </div>
+    </div>
+  </section>
+
+  <input
+    id="gallery-input"
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    hidden>
+
+  <canvas id="work-canvas" hidden></canvas>
+
+  <form
+    id="upload-form"
+    method="POST"
+    hidden>
+    <input type="hidden" name="pcosAction" value="S24_PATIENT_ID_CAMERA_UPLOAD">
+    <input type="hidden" name="token" id="post-token">
+    <input type="hidden" name="mimeType" value="image/jpeg">
+    <input type="hidden" name="base64" id="post-base64">
+  </form>
+
+  <script>
+  (function(){
+    'use strict';
+
+    const VERSION='2.63.1D2C-S24-P1E.1';
+    const MESSAGE_READY='PCOS_PIDM_CAMERA_READY';
+    const MESSAGE_SESSION='PCOS_PIDM_CAMERA_SESSION';
+
+    const app=document.getElementById('app');
+    const root=document.getElementById('root');
+    const cameraScreen=document.getElementById('camera-screen');
+    const video=document.getElementById('camera-video');
+    const frame=document.getElementById('camera-frame');
+    const cameraPatient=document.getElementById('camera-patient');
+    const galleryInput=document.getElementById('gallery-input');
+    const workCanvas=document.getElementById('work-canvas');
+    const uploadForm=document.getElementById('upload-form');
+    const postToken=document.getElementById('post-token');
+    const postBase64=document.getElementById('post-base64');
+
+    let session=null;
+    let trustedOpenerOrigin='';
+    let stream=null;
+    let preparedBlob=null;
+    let preparedUrl='';
+    let preparedQuality=null;
+    let processing=false;
+
+    function escapeHtml(value){
+      return String(value == null ? '' : value)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+
+    function safeHttpsUrl(value){
+      try{
+        const url=new URL(String(value||''));
+        return url.protocol==='https:' ? url.href : '';
+      }catch(error){
+        return '';
+      }
+    }
+
+    function patientCard(){
+      const p=session&&session.patient||{};
+
+      return (
+        '<section class="group patient-card">'+
+          '<div class="patient-head">'+
+            '<div>'+
+              '<div class="group-title">SELECTED PATIENT</div>'+
+              '<div class="patient-name">'+
+                escapeHtml(p.fullName||'Selected patient')+
+              '</div>'+
+            '</div>'+
+            '<span class="pill warn">Patient ID Required</span>'+
+          '</div>'+
+          '<div class="patient-meta">'+
+            '<div class="meta-box">'+
+              '<span>PhilHealth PIN</span>'+
+              '<strong>'+escapeHtml(p.primaryPin||'—')+'</strong>'+
+            '</div>'+
+            '<div class="meta-box">'+
+              '<span>Birthdate</span>'+
+              '<strong>'+escapeHtml(p.birthdate||'—')+'</strong>'+
+            '</div>'+
+          '</div>'+
+        '</section>'
+      );
+    }
+
+    function renderReady(){
+      root.innerHTML=
+        patientCard()+
+        '<section class="group state-card">'+
+          '<div class="state-icon">▣</div>'+
+          '<div class="group-title">LIVE CAMERA READY</div>'+
+          '<h3>Capture Patient ID</h3>'+
+          '<p>'+
+            'The rear camera will open full-screen with the actual ID guide over the live image.'+
+          '</p>'+
+          '<div class="actions" style="margin-top:14px;border-top:0;padding:0">'+
+            '<button type="button" class="button secondary" id="ready-gallery">Gallery</button>'+
+            '<button type="button" class="button primary" id="ready-camera">Open Live Camera</button>'+
+          '</div>'+
+        '</section>';
+
+      document
+        .getElementById('ready-camera')
+        .addEventListener('click',startCamera);
+
+      document
+        .getElementById('ready-gallery')
+        .addEventListener('click',openGallery);
+    }
+
+    function renderError(message,withRetry){
+      stopCamera();
+
+      root.innerHTML=
+        patientCard()+
+        '<section class="group state-card">'+
+          '<div class="state-icon">!</div>'+
+          '<div class="group-title">PATIENT ID CAPTURE</div>'+
+          '<h3>Camera needs attention</h3>'+
+          '<div class="state-error">'+
+            escapeHtml(message||'Unable to continue with the camera.')+
+          '</div>'+
+          (
+            withRetry
+              ? '<div class="actions" style="margin-top:14px;border-top:0;padding:0">'+
+                  '<button type="button" class="button secondary" id="error-gallery">Gallery</button>'+
+                  '<button type="button" class="button primary" id="error-retry">Try Camera Again</button>'+
+                '</div>'
+              : ''
+          )+
+        '</section>';
+
+      if(withRetry){
+        document
+          .getElementById('error-gallery')
+          .addEventListener('click',openGallery);
+
+        document
+          .getElementById('error-retry')
+          .addEventListener('click',startCamera);
+      }
+    }
+
+    async function startCamera(){
+      if(!session){
+        renderError(
+          'No secure PCOS capture session is available.',
+          false
+        );
+        return;
+      }
+
+      if(
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia!=='function'
+      ){
+        renderError(
+          'This browser does not provide live camera access. Use Gallery or open the page in a current mobile browser.',
+          true
+        );
+        return;
+      }
+
+      stopCamera();
+
+      try{
+        stream=
+          await navigator.mediaDevices.getUserMedia({
+            audio:false,
+            video:{
+              facingMode:{ideal:'environment'},
+              width:{ideal:1920},
+              height:{ideal:1080}
+            }
+          });
+
+        video.srcObject=stream;
+
+        await new Promise(function(resolve,reject){
+          const timer=setTimeout(
+            function(){
+              reject(
+                new Error(
+                  'The rear camera took too long to start.'
+                )
+              );
+            },
+            7000
+          );
+
+          video.onloadedmetadata=function(){
+            clearTimeout(timer);
+            resolve();
+          };
+        });
+
+        await video.play();
+
+        cameraPatient.textContent=
+          session.patient &&
+          session.patient.fullName
+            ? session.patient.fullName
+            : 'Selected patient';
+
+        document.body.classList.add('camera-active');
+        cameraScreen.hidden=false;
+
+      }catch(error){
+        const name=String(error&&error.name||'');
+
+        let message=
+          error&&error.message
+            ? error.message
+            : 'Unable to open the rear camera.';
+
+        if(name==='NotAllowedError'){
+          message=
+            'Camera permission was not allowed. Enable camera permission for this site, then try again.';
+        }else if(name==='NotFoundError'){
+          message=
+            'No usable camera was found on this device.';
+        }else if(name==='NotReadableError'){
+          message=
+            'The camera is currently being used by another app or browser tab.';
+        }
+
+        renderError(
+          message,
+          true
+        );
+      }
+    }
+
+    function stopCamera(){
+      document.body.classList.remove('camera-active');
+      cameraScreen.hidden=true;
+
+      if(stream){
+        stream.getTracks().forEach(function(track){
+          try{track.stop();}catch(error){}
+        });
+      }
+
+      stream=null;
+      video.srcObject=null;
+    }
+
+    function openGallery(){
+      galleryInput.value='';
+      galleryInput.click();
+    }
+
+    function objectCoverGeometry(){
+      const vw=video.videoWidth;
+      const vh=video.videoHeight;
+      const cw=video.clientWidth;
+      const ch=video.clientHeight;
+
+      if(!vw||!vh||!cw||!ch){
+        throw new Error(
+          'The camera frame is not ready yet.'
+        );
+      }
+
+      const scale=
+        Math.max(
+          cw/vw,
+          ch/vh
+        );
+
+      const displayedWidth=vw*scale;
+      const displayedHeight=vh*scale;
+      const offsetX=(cw-displayedWidth)/2;
+      const offsetY=(ch-displayedHeight)/2;
+
+      return {
+        scale:scale,
+        offsetX:offsetX,
+        offsetY:offsetY
+      };
+    }
+
+    function captureFrame(){
+      if(processing){
+        return;
+      }
+
+      if(
+        !video.videoWidth ||
+        !video.videoHeight
+      ){
+        renderError(
+          'The camera is still starting. Try again in a moment.',
+          true
+        );
+        return;
+      }
+
+      processing=true;
+
+      try{
+        const videoRect=
+          video.getBoundingClientRect();
+
+        const frameRect=
+          frame.getBoundingClientRect();
+
+        const geometry=
+          objectCoverGeometry();
+
+        let sx=
+          (
+            frameRect.left-
+            videoRect.left-
+            geometry.offsetX
+          )/
+          geometry.scale;
+
+        let sy=
+          (
+            frameRect.top-
+            videoRect.top-
+            geometry.offsetY
+          )/
+          geometry.scale;
+
+        let sw=
+          frameRect.width/
+          geometry.scale;
+
+        let sh=
+          frameRect.height/
+          geometry.scale;
+
+        sx=Math.max(0,sx);
+        sy=Math.max(0,sy);
+        sw=Math.min(sw,video.videoWidth-sx);
+        sh=Math.min(sh,video.videoHeight-sy);
+
+        const targetWidth=1600;
+        const targetHeight=
+          Math.round(
+            targetWidth*
+            53.98/
+            85.60
+          );
+
+        workCanvas.width=targetWidth;
+        workCanvas.height=targetHeight;
+
+        const ctx=
+          workCanvas.getContext(
+            '2d',
+            {alpha:false,willReadFrequently:true}
+          );
+
+        ctx.drawImage(
+          video,
+          sx,
+          sy,
+          sw,
+          sh,
+          0,
+          0,
+          targetWidth,
+          targetHeight
+        );
+
+        prepareCanvas(
+          workCanvas
+        );
+      }
+      catch(error){
+        processing=false;
+
+        renderError(
+          error&&error.message
+            ? error.message
+            : 'Unable to capture the Patient ID.',
+          true
+        );
+      }
+    }
+
+    async function prepareCanvas(canvas){
+      try{
+        preparedQuality=
+          analyzeQuality(
+            canvas
+          );
+
+        preparedBlob=
+          await canvasToTargetJpeg(
+            canvas
+          );
+
+        stopCamera();
+        renderReview();
+      }
+      catch(error){
+        renderError(
+          error&&error.message
+            ? error.message
+            : 'Unable to prepare the Patient ID photo.',
+          true
+        );
+      }
+      finally{
+        processing=false;
+      }
+    }
+
+    function analyzeQuality(canvas){
+      const sample=document.createElement('canvas');
+
+      sample.width=240;
+      sample.height=
+        Math.max(
+          120,
+          Math.round(
+            240*
+            canvas.height/
+            canvas.width
+          )
+        );
+
+      const ctx=
+        sample.getContext(
+          '2d',
+          {willReadFrequently:true}
+        );
+
+      ctx.drawImage(
+        canvas,
+        0,
+        0,
+        sample.width,
+        sample.height
+      );
+
+      const data=
+        ctx.getImageData(
+          0,
+          0,
+          sample.width,
+          sample.height
+        ).data;
+
+      const gray=
+        new Uint8Array(
+          sample.width*
+          sample.height
+        );
+
+      let brightness=0;
+      let glare=0;
+
+      for(let i=0,p=0;i<data.length;i+=4,p++){
+        const value=
+          (
+            data[i]*77+
+            data[i+1]*150+
+            data[i+2]*29
+          )>>8;
+
+        gray[p]=value;
+        brightness+=value;
+
+        if(value>245){
+          glare++;
+        }
+      }
+
+      let sharpness=0;
+      let count=0;
+
+      for(let y=1;y<sample.height-1;y+=2){
+        for(let x=1;x<sample.width-1;x+=2){
+          const i=
+            y*
+            sample.width+
+            x;
+
+          sharpness+=
+            Math.abs(
+              gray[i+1]-
+              gray[i-1]
+            )+
+            Math.abs(
+              gray[i+sample.width]-
+              gray[i-sample.width]
+            );
+
+          count++;
+        }
+      }
+
+      return {
+        brightness:
+          brightness/
+          gray.length,
+
+        sharpness:
+          count
+            ? sharpness/count
+            : 0,
+
+        glare:
+          glare/
+          gray.length
+      };
+    }
+
+    function canvasToBlob(canvas,type,quality){
+      return new Promise(function(resolve,reject){
+        canvas.toBlob(
+          function(blob){
+            if(blob){
+              resolve(blob);
+              return;
+            }
+
+            reject(
+              new Error(
+                'Unable to create the reviewed image.'
+              )
+            );
+          },
+          type,
+          quality
+        );
+      });
+    }
+
+    async function canvasToTargetJpeg(canvas){
+      const qualities=[
+        .88,
+        .82,
+        .76,
+        .70,
+        .64
+      ];
+
+      const maxBytes=
+        1250*
+        1024;
+
+      let blob=null;
+
+      for(let i=0;i<qualities.length;i++){
+        blob=
+          await canvasToBlob(
+            canvas,
+            'image/jpeg',
+            qualities[i]
+          );
+
+        if(
+          blob &&
+          blob.size<=maxBytes
+        ){
+          return blob;
+        }
+      }
+
+      if(
+        blob &&
+        blob.size<=
+          1800*
+          1024
+      ){
+        return blob;
+      }
+
+      throw new Error(
+        'The photo is still too large. Retake it closer to the ID or choose another image.'
+      );
+    }
+
+    function qualityChip(label,good){
+      return (
+        '<span class="quality '+
+          (good?'':'warn')+
+        '">'+
+          escapeHtml(label)+
+        '</span>'
+      );
+    }
+
+    function renderReview(){
+      if(preparedUrl){
+        URL.revokeObjectURL(
+          preparedUrl
+        );
+      }
+
+      preparedUrl=
+        URL.createObjectURL(
+          preparedBlob
+        );
+
+      const q=
+        preparedQuality||
+        {};
+
+      const lightingGood=
+        q.brightness>=35 &&
+        q.brightness<=232;
+
+      const clarityGood=
+        q.sharpness>=6;
+
+      const glareGood=
+        q.glare<=.28;
+
+      const warning=
+        !lightingGood ||
+        !clarityGood ||
+        !glareGood;
+
+      root.innerHTML=
+        patientCard()+
+        '<section class="group review-card">'+
+          '<div class="group-head">'+
+            '<div>'+
+              '<h3>Review Patient ID</h3>'+
+              '<p>Make sure the name, photo, and important ID details are readable.</p>'+
+            '</div>'+
+            '<span class="pill">Review</span>'+
+          '</div>'+
+          '<div class="review-media">'+
+            '<img src="'+preparedUrl+'" alt="Captured Patient ID preview">'+
+          '</div>'+
+          '<div class="quality-row">'+
+            qualityChip(
+              lightingGood
+                ? 'Lighting looks good'
+                : 'Check the lighting',
+              lightingGood
+            )+
+            qualityChip(
+              clarityGood
+                ? 'Image looks clear'
+                : 'Image may be blurry',
+              clarityGood
+            )+
+            qualityChip(
+              glareGood
+                ? 'No strong glare detected'
+                : 'Glare may cover details',
+              glareGood
+            )+
+          '</div>'+
+          (
+            warning
+              ? '<div class="notice warn">'+
+                  'A quality warning was detected. Review the ID carefully before choosing Upload Patient ID.'+
+                '</div>'
+              : '<div class="notice">'+
+                  'The photo looks ready. Confirm that all important information is visible before upload.'+
+                '</div>'
+          )+
+          '<div class="actions">'+
+            '<button type="button" class="button secondary" id="review-retake">Retake</button>'+
+            '<button type="button" class="button primary" id="review-upload">Upload Patient ID</button>'+
+          '</div>'+
+        '</section>';
+
+      document
+        .getElementById('review-retake')
+        .addEventListener(
+          'click',
+          startCamera
+        );
+
+      document
+        .getElementById('review-upload')
+        .addEventListener(
+          'click',
+          uploadPrepared
+        );
+    }
+
+    async function uploadPrepared(){
+      if(
+        !session ||
+        !preparedBlob ||
+        processing
+      ){
+        return;
+      }
+
+      const postUrl=
+        safeHttpsUrl(
+          session.postUrl
+        );
+
+      if(!postUrl){
+        renderError(
+          'The secure PCOS upload endpoint is unavailable.',
+          false
+        );
+        return;
+      }
+
+      processing=true;
+
+      root.innerHTML=
+        patientCard()+
+        '<section class="group state-card">'+
+          '<div class="loader"></div>'+
+          '<div class="group-title">PATIENT ID CAPTURE</div>'+
+          '<h3>Preparing secure upload…</h3>'+
+          '<p>Keep this page open while the reviewed photo is transferred to PCOS.</p>'+
+        '</section>';
+
+      try{
+        const base64=
+          await blobToBase64(
+            preparedBlob
+          );
+
+        postToken.value=
+          String(
+            session.token||''
+          );
+
+        postBase64.value=
+          base64;
+
+        uploadForm.action=
+          postUrl;
+
+        if(!postToken.value){
+          throw new Error(
+            'The secure Patient ID session is unavailable.'
+          );
+        }
+
+        /*
+         * Normal form navigation intentionally avoids cross-origin fetch/CORS.
+         * Apps Script D.2B receives the POST and reuses the canonical S8-P8F
+         * patient-bound upload pipeline.
+         */
+        uploadForm.submit();
+      }
+      catch(error){
+        processing=false;
+
+        renderError(
+          error&&error.message
+            ? error.message
+            : 'Unable to prepare the Patient ID upload.',
+          true
+        );
+      }
+    }
+
+    function blobToBase64(blob){
+      return new Promise(function(resolve,reject){
+        const reader=new FileReader();
+
+        reader.onload=function(){
+          resolve(
+            String(
+              reader.result||
+              ''
+            )
+              .replace(
+                /^data:[^;]+;base64,/i,
+                ''
+              )
+          );
+        };
+
+        reader.onerror=function(){
+          reject(
+            new Error(
+              'Unable to read the reviewed Patient ID image.'
+            )
+          );
+        };
+
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function prepareGalleryFile(file){
+      if(!file){
+        return;
+      }
+
+      const allowed=[
+        'image/jpeg',
+        'image/png',
+        'image/webp'
+      ];
+
+      if(
+        allowed.indexOf(
+          String(file.type||'').toLowerCase()
+        )===-1
+      ){
+        renderError(
+          'Choose a JPEG, PNG, or WEBP image.',
+          true
+        );
+        return;
+      }
+
+      if(file.size>8*1024*1024){
+        renderError(
+          'The selected image is larger than 8 MB.',
+          true
+        );
+        return;
+      }
+
+      processing=true;
+
+      try{
+        const image=
+          await fileToImage(
+            file
+          );
+
+        const maxWidth=1600;
+        const scale=
+          Math.min(
+            1,
+            maxWidth/
+            image.naturalWidth
+          );
+
+        const width=
+          Math.max(
+            1,
+            Math.round(
+              image.naturalWidth*
+              scale
+            )
+          );
+
+        const height=
+          Math.max(
+            1,
+            Math.round(
+              image.naturalHeight*
+              scale
+            )
+          );
+
+        workCanvas.width=width;
+        workCanvas.height=height;
+
+        const ctx=
+          workCanvas.getContext(
+            '2d',
+            {alpha:false,willReadFrequently:true}
+          );
+
+        ctx.drawImage(
+          image,
+          0,
+          0,
+          width,
+          height
+        );
+
+        preparedQuality=
+          analyzeQuality(
+            workCanvas
+          );
+
+        preparedBlob=
+          await canvasToTargetJpeg(
+            workCanvas
+          );
+
+        stopCamera();
+        renderReview();
+      }
+      catch(error){
+        renderError(
+          error&&error.message
+            ? error.message
+            : 'Unable to prepare the selected image.',
+          true
+        );
+      }
+      finally{
+        processing=false;
+      }
+    }
+
+    function fileToImage(file){
+      return new Promise(function(resolve,reject){
+        const url=
+          URL.createObjectURL(
+            file
+          );
+
+        const image=new Image();
+
+        image.onload=function(){
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+
+        image.onerror=function(){
+          URL.revokeObjectURL(url);
+          reject(
+            new Error(
+              'Unable to read the selected image.'
+            )
+          );
+        };
+
+        image.src=url;
+      });
+    }
+
+    function acceptSessionMessage(event){
+      if(
+        !window.opener ||
+        event.source!==window.opener ||
+        !event.data ||
+        event.data.type!==MESSAGE_SESSION
+      ){
+        return;
+      }
+
+      const candidate=
+        event.data.session||{};
+
+      const postUrl=
+        safeHttpsUrl(
+          candidate.postUrl
+        );
+
+      const token=
+        String(
+          candidate.token||''
+        ).trim();
+
+      if(
+        !postUrl ||
+        !token
+      ){
+        return;
+      }
+
+      /*
+       * First accepted opener becomes the trusted origin for this page.
+       * Session data is kept only in JS memory.
+       */
+      trustedOpenerOrigin=
+        event.origin;
+
+      session={
+        token:token,
+        postUrl:postUrl,
+        patient:
+          candidate.patient||{},
+        canonicalFileName:
+          String(
+            candidate.canonicalFileName||''
+          )
+      };
+
+      renderReady();
+    }
+
+    function announceReady(){
+      if(!window.opener){
+        return;
+      }
+
+      window.opener.postMessage(
+        {
+          type:MESSAGE_READY,
+          version:VERSION
+        },
+        '*'
+      );
+    }
+
+    window.addEventListener(
+      'message',
+      acceptSessionMessage
+    );
+
+    window.addEventListener(
+      'pagehide',
+      function(){
+        stopCamera();
+
+        if(preparedUrl){
+          URL.revokeObjectURL(
+            preparedUrl
+          );
+        }
+
+        /*
+         * Explicitly clear patient-bound transient state from this page.
+         */
+        session=null;
+        trustedOpenerOrigin='';
+        preparedBlob=null;
+        preparedUrl='';
+        preparedQuality=null;
+      }
+    );
+
+    document
+      .getElementById('camera-close')
+      .addEventListener(
+        'click',
+        function(){
+          stopCamera();
+          renderReady();
+        }
+      );
+
+    document
+      .getElementById('camera-shutter')
+      .addEventListener(
+        'click',
+        captureFrame
+      );
+
+    document
+      .getElementById('camera-gallery')
+      .addEventListener(
+        'click',
+        openGallery
+      );
+
+    galleryInput
+      .addEventListener(
+        'change',
+        function(){
+          const file=
+            galleryInput.files &&
+            galleryInput.files[0];
+
+          prepareGalleryFile(
+            file
+          );
+        }
+      );
+
+    /*
+     * Companion is sessionless when opened directly.
+     * PCOS opens it in a new top-level HTTPS window and supplies the
+     * signed session only after this READY message.
+     */
+    announceReady();
+  })();
+  </script>
+</body>
+</html>
